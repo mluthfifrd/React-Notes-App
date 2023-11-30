@@ -9,20 +9,36 @@ import LoginPage from '../pages/auth/LoginPage'
 import RegisterPage from '../pages/auth/RegisterPage'
 import Header from '../pages/layout/Header'
 import { getUserLogged, putAccessToken } from '../utils/network-data'
+import { LocaleProvider } from '../context/LocaleContext'
 
 function NoteApp() {
   const navigate = useNavigate()
   const [authedUser, setAuthedUser] = useState(null)
   const [initializing, setInitializing] = useState(true)
 
+  const storedLocale = localStorage.getItem('locale') || 'id'
+
+  const [locale, setLocale] = useState(storedLocale)
+
+  const toggleLocale = () => {
+    const newLocale = locale === 'id' ? 'en' : 'id'
+    localStorage.setItem('locale', newLocale)
+    setLocale(newLocale)
+  }
+
+  const localeContextValue = {
+    locale,
+    toggleLocale
+  }
+
   useEffect(() => {
     const fetchData = async () => {
+      setInitializing(true)
       try {
         const { data } = await getUserLogged()
         setAuthedUser(data)
         setInitializing(false)
       } catch (error) {
-        // Handle errors if necessary
         console.error('Error fetching user data:', error)
         setInitializing(false)
       }
@@ -45,17 +61,43 @@ function NoteApp() {
   }
 
   if (initializing) {
-    return (
-      <div className="load-login">
-        <h1>AMBIL DATA</h1>
-      </div>
-    )
+    return
   }
 
   if (authedUser === null) {
     return (
+      <LocaleProvider value={localeContextValue}>
+        <div className="app-container">
+          <Header authUser={authedUser} />
+          <main>
+            <Routes>
+              <Route path="/" element={authedUser ? <HomePage /> : <Navigate to="/login" />} />
+              <Route
+                path="/archives"
+                element={authedUser ? <ArchivePage /> : <Navigate to="/login" />}
+              />
+              <Route
+                path="/notes/new"
+                element={authedUser ? <AddNotePage /> : <Navigate to="/login" />}
+              />
+              <Route
+                path="/notes/:id"
+                element={authedUser ? <DetailPageWrapper /> : <Navigate to="/login" />}
+              />
+              <Route path="/login" element={<LoginPage loginSuccess={onLoginSuccess} />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/*" element={<NotFoundPage />} />
+            </Routes>
+          </main>
+        </div>
+      </LocaleProvider>
+    )
+  }
+
+  return (
+    <LocaleProvider value={localeContextValue}>
       <div className="app-container">
-        <Header authUser={authedUser} />
+        <Header logout={onLogout} name={authedUser.name} authUser={authedUser} />
         <main>
           <Routes>
             <Route path="/" element={authedUser ? <HomePage /> : <Navigate to="/login" />} />
@@ -77,33 +119,7 @@ function NoteApp() {
           </Routes>
         </main>
       </div>
-    )
-  }
-
-  return (
-    <div className="app-container">
-      <Header logout={onLogout} name={authedUser.name} authUser={authedUser} />
-      <main>
-        <Routes>
-          <Route path="/" element={authedUser ? <HomePage /> : <Navigate to="/login" />} />
-          <Route
-            path="/archives"
-            element={authedUser ? <ArchivePage /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/notes/new"
-            element={authedUser ? <AddNotePage /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/notes/:id"
-            element={authedUser ? <DetailPageWrapper /> : <Navigate to="/login" />}
-          />
-          <Route path="/login" element={<LoginPage loginSuccess={onLoginSuccess} />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/*" element={<NotFoundPage />} />
-        </Routes>
-      </main>
-    </div>
+    </LocaleProvider>
   )
 }
 
