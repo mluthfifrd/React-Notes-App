@@ -1,65 +1,81 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { getArchivedNotes } from '../utils/local-data'
+import { getArchivedNotes } from '../utils/network-data'
 import NotesEmptyPage from './NotesEmptyPage'
 import NotesList from '../components/notes/NotesList'
 import SearchBar from '../components/SearchBar'
+import { LocaleConsumer } from '../context/LocaleContext'
+import { chaoticOrbit } from 'ldrs'
 
-function ArchivePageWrapper() {
+function ArchivePage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const keyword = searchParams.get('keyword')
-  function changeSearchParams(keyword) {
-    setSearchParams({ keyword })
-  }
+  const defaultKeyword = searchParams.get('keyword')
 
-  return <ArchivePage defaultKeyword={keyword} keywordChange={changeSearchParams} />
-}
+  const [notes, setNotes] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [keyword, setKeyword] = useState(defaultKeyword || '')
 
-class ArchivePage extends React.Component {
-  constructor(props) {
-    super(props)
+  chaoticOrbit.register()
 
-    this.state = {
-      notes: getArchivedNotes(),
-      keyword: props.defaultKeyword || ''
-    }
-
-    this.onKeywordChangeHandler = this.onKeywordChangeHandler.bind(this)
-  }
-
-  onKeywordChangeHandler(keyword) {
-    this.setState(() => {
-      return {
-        keyword
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true)
+        const { data } = await getArchivedNotes()
+        setNotes(data)
+        setIsLoading(false)
+      } catch (error) {
+        alert('Terjadi kegagalan saat melakukan mengambil data arsip catatan :(')
+        setIsLoading(false)
       }
-    })
-
-    this.props.keywordChange(keyword)
-  }
-
-  render() {
-    const notes = this.state.notes.filter((note) => {
-      return note.title.toLowerCase().includes(this.state.keyword.toLowerCase())
-    })
-
-    if (this.state.notes.length <= 0) {
-      return (
-        <section className="archives-page">
-          <h2>Catatan Arsip</h2>
-          <SearchBar keyword={this.state.keyword} keywordChange={this.onKeywordChangeHandler} />
-          <NotesEmptyPage />
-        </section>
-      )
-    } else {
-      return (
-        <section className="archives-page">
-          <h2>Catatan Arsip</h2>
-          <SearchBar keyword={this.state.keyword} keywordChange={this.onKeywordChangeHandler} />
-          <NotesList notes={notes} />
-        </section>
-      )
     }
+
+    fetchData()
+  }, [])
+
+  const onKeywordChangeHandler = (newKeyword) => {
+    setKeyword(newKeyword)
+    setSearchParams({ keyword: newKeyword })
   }
+
+  const filteredNotes = notes.filter((note) => {
+    return note.title.toLowerCase().includes(keyword.toLowerCase())
+  })
+
+  if (isLoading) {
+    return (
+      <section className="homepage">
+        <div className="load-data">
+          <div className="loading">
+            <l-chaotic-orbit size="100" speed="1.5" color="gray"></l-chaotic-orbit>
+          </div>
+          <h2>Loading...</h2>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <LocaleConsumer>
+      {({ locale }) => {
+        return (
+          <section className="archives-page">
+            <h2>{locale === 'id' ? 'Catatan Arsip' : 'Archived Notes'}</h2>
+            <SearchBar keyword={keyword} keywordChange={onKeywordChangeHandler} />
+            {notes.length <= 0 ? (
+              <>
+                <NotesEmptyPage />
+              </>
+            ) : (
+              <>
+                <NotesList notes={filteredNotes} />
+              </>
+            )}
+          </section>
+        )
+      }}
+    </LocaleConsumer>
+  )
 }
 
-export default ArchivePageWrapper
+export default ArchivePage
