@@ -1,115 +1,111 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getNote, deleteNote, archiveNote, unarchiveNote } from '../utils/local-data'
+import { getNote, deleteNote, archiveNote, unarchiveNote } from '../utils/network-data'
 import { showFormattedDate } from '../utils'
 import ArchiveButton from '../components/button/ArchiveButton'
 import DeleteButton from '../components/button/DeleteButton'
 import UnArchiveButton from '../components/button/UnArchiveButton'
+import { chaoticOrbit } from 'ldrs'
 
-function DetailPageWrapper() {
+function DetailPage() {
   const navigate = useNavigate()
   const { id } = useParams()
-  const [note, setNote] = useState(getNote(id))
+  const [note, setNote] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  chaoticOrbit.register()
 
   useEffect(() => {
-    setNote(getNote(id))
+    const fetchNote = async () => {
+      setIsLoading(true)
+      try {
+        const fetchedNote = await getNote(id)
+        setNote(fetchedNote)
+        setIsLoading(false)
+      } catch (error) {
+        alert('Terjadi kegagalan saat melakukan mengambil data catatan :(')
+        setIsLoading(false)
+      }
+    }
+
+    fetchNote()
   }, [id])
 
-  function handleDeleteSuccess() {
-    deleteNote(id)
-    setNote(getNote(id))
-    navigate('/')
+  const handleDeleteSuccess = async () => {
+    try {
+      await deleteNote(id)
+      setNote(null)
+      navigate('/')
+    } catch (error) {
+      alert('Terjadi kegagalan saat menghapus catatan :(')
+    }
   }
 
-  function handleArchiveSuccess() {
-    archiveNote(id)
-    setNote(getNote(id))
-    navigate('/')
+  const handleArchiveSuccess = async () => {
+    try {
+      await archiveNote(id)
+      const updatedNote = await getNote(id)
+      setNote(updatedNote)
+      navigate('/')
+    } catch (error) {
+      alert('Terjadi kegagalan saat mengarsipkan catatan :(')
+    }
   }
 
-  function handleUnArchiveSuccess() {
-    unarchiveNote(id)
-    setNote(getNote(id))
-    navigate('/')
+  const handleUnArchiveSuccess = async () => {
+    try {
+      await unarchiveNote(id)
+      const updatedNote = await getNote(id)
+      setNote(updatedNote)
+      navigate('/')
+    } catch (error) {
+      alert('Terjadi kegagalan saat tidak mengarsipkan catatan :(')
+    }
   }
+
+  if (isLoading) {
+    return (
+      <section className="homepage">
+        <div className="load-data">
+          <div className="loading">
+            <l-chaotic-orbit size="100" speed="1.5" color="gray"></l-chaotic-orbit>
+          </div>
+          <h2>Loading...</h2>
+        </div>
+      </section>
+    )
+  }
+
+  if (!note || note === null || note.data === null) {
+    return (
+      <section className="detail-page">
+        <h2>Catatan Tidak Ditemukan</h2>
+      </section>
+    )
+  }
+
+  const { title, body, createdAt, archived } = note.data
 
   return (
-    <DetailPage
-      id={id}
-      note={note}
-      onDeleteSuccess={handleDeleteSuccess}
-      onArchiveSuccess={handleArchiveSuccess}
-      onUnArchiveSuccess={handleUnArchiveSuccess}
-    />
+    <section className="detail-page">
+      <h3 className="detail-page__title">{title}</h3>
+      <p className="detail-page__createdAt">{showFormattedDate(createdAt)}</p>
+      <p className="detail-page__body">{body}</p>
+      <div className="detail-page__action">
+        {archived ? (
+          <>
+            <UnArchiveButton id={Number(id)} onUnArchive={handleUnArchiveSuccess} />
+            <DeleteButton id={Number(id)} onDelete={handleDeleteSuccess} />
+          </>
+        ) : (
+          <>
+            <ArchiveButton id={Number(id)} onArchive={handleArchiveSuccess} />
+            <DeleteButton id={Number(id)} onDelete={handleDeleteSuccess} />
+          </>
+        )}
+      </div>
+    </section>
   )
 }
 
-class DetailPage extends React.Component {
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      note: getNote(props.id)
-    }
-
-    this.onDeleteHandler = this.onDeleteHandler.bind(this)
-    this.onArchiveHandler = this.onArchiveHandler.bind(this)
-    this.onUnArchiveHandler = this.onUnArchiveHandler.bind(this)
-  }
-
-  onDeleteHandler(id) {
-    deleteNote(id)
-
-    this.props.onDeleteSuccess()
-  }
-
-  onArchiveHandler(id) {
-    archiveNote(id)
-
-    this.props.onArchiveSuccess()
-  }
-
-  onUnArchiveHandler(id) {
-    unarchiveNote(id)
-
-    this.props.onUnArchiveSuccess()
-  }
-
-  render() {
-    const { id, title, body, createdAt, archived } = this.state.note
-
-    if (this.state.note === null || this.state.note === undefined) {
-      return (
-        <section className="detail-page">
-          <h2>Catatan Tidak Ditemukan</h2>
-        </section>
-      )
-    } else if (archived === true) {
-      return (
-        <section className="detail-page">
-          <h3 className="detail-page__title">{title}</h3>
-          <p className="detail-page__createdAt">{showFormattedDate(createdAt)}</p>
-          <p className="detail-page__body">{body}</p>
-          <div className="detail-page__action">
-            <UnArchiveButton id={Number(id)} onUnArchive={this.onUnArchiveHandler} />
-            <DeleteButton id={Number(id)} onDelete={this.onDeleteHandler} />
-          </div>
-        </section>
-      )
-    } else {
-      return (
-        <section className="detail-page">
-          <h3 className="detail-page__title">{title}</h3>
-          <p className="detail-page__createdAt">{showFormattedDate(createdAt)}</p>
-          <p className="detail-page__body">{body}</p>
-          <div className="detail-page__action">
-            <ArchiveButton id={Number(id)} onArchive={this.onArchiveHandler} />
-            <DeleteButton id={Number(id)} onDelete={this.onDeleteHandler} />
-          </div>
-        </section>
-      )
-    }
-  }
-}
-
-export default DetailPageWrapper
+export default DetailPage
