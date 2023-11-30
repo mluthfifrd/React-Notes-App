@@ -33,6 +33,15 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
+.load-data {
+  display: flex;
+  flex-direction: column;
+  column-gap: 10px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 50px;
+}
+
 .load-login {
   color: var(--on-background);
   background-color: var(--background);
