@@ -1,66 +1,58 @@
-import React from 'react'
+import React, { useState, useRef } from 'react'
 import PropTypes from 'prop-types'
 import SaveButton from '../button/SaveButton'
+import { LocaleConsumer } from '../../context/LocaleContext'
 
-class NoteAdd extends React.Component {
-  constructor(props) {
-    super(props)
+function NoteAdd({ addNote }) {
+  const [title, setTitle] = useState('')
+  const [body, setBody] = useState('')
 
-    this.state = {
-      title: '',
-      body: ''
-    }
+  const contentEditableDiv = useRef(null)
 
-    this.onTitleChangeEventHandler = this.onTitleChangeEventHandler.bind(this)
-    this.onBodyChangeEventHandler = this.onBodyChangeEventHandler.bind(this)
-    this.onSubmitEventHandler = this.onSubmitEventHandler.bind(this)
+  const onTitleChangeEventHandler = (event) => {
+    setTitle(event.target.value)
   }
 
-  onTitleChangeEventHandler = (event) => {
-    this.setState({
-      title: event.target.value
-    })
+  const onBodyChangeEventHandler = () => {
+    setBody(contentEditableDiv.current.innerText)
   }
 
-  onBodyChangeEventHandler() {
-    const contentEditableDiv = this.contentEditableDiv
-    this.setState(() => {
-      return {
-        body: contentEditableDiv.innerText
-      }
-    })
-  }
-
-  onSubmitEventHandler(event) {
+  const onSubmitEventHandler = (event) => {
     event.preventDefault()
-    this.props.addNote(this.state)
+    addNote({ title, body })
   }
 
-  render() {
-    return (
-      <section className="add-new-page">
-        <div className="add-new-page__input">
-          <input
-            className="add-new-page__input__title"
-            type="text"
-            placeholder="Catatan rahasia"
-            value={this.state.title}
-            onChange={this.onTitleChangeEventHandler}
-          />
-          <div
-            className="add-new-page__input__body"
-            contentEditable="true"
-            data-placeholder="Sebenarnya saya adalah ...."
-            onInput={this.onBodyChangeEventHandler}
-            ref={(div) => (this.contentEditableDiv = div)}
-          ></div>
-        </div>
-        <div className="add-new-page__action">
-          <SaveButton onClick={this.onSubmitEventHandler} />
-        </div>
-      </section>
-    )
-  }
+  return (
+    <LocaleConsumer>
+      {({ locale }) => {
+        return (
+          <section className="add-new-page">
+            <div className="add-new-page__input">
+              <input
+                className="add-new-page__input__title"
+                type="text"
+                placeholder={locale === 'id' ? 'Catatan rahasia' : 'Secret notes'}
+                value={title}
+                onChange={onTitleChangeEventHandler}
+              />
+              <div
+                className="add-new-page__input__body"
+                contentEditable="true"
+                data-placeholder={
+                  locale === 'id' ? 'Sebenarnya saya adalah ....' : 'Actually I am ....'
+                }
+                onInput={onBodyChangeEventHandler}
+                ref={contentEditableDiv}
+              ></div>
+            </div>
+            <div className="add-new-page__action">
+              <SaveButton onClick={onSubmitEventHandler} />
+            </div>
+          </section>
+        )
+      }}
+    </LocaleConsumer>
+  )
 }
 
 NoteAdd.propTypes = {
