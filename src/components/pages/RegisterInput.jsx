@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import PropTypes from 'prop-types'
 
-const RegisterInput = ({ register }) => {
+function RegisterInput({ register }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -40,7 +40,6 @@ const RegisterInput = ({ register }) => {
   const onSubmitHandler = (event) => {
     event.preventDefault()
 
-    // Add validation for matching passwords before calling register
     if (formData.password !== formData.confirmPassword) {
       alert('Password and Confirm Password must match!')
       return
