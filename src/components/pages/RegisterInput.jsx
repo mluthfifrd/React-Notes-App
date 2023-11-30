@@ -79,7 +79,7 @@ function RegisterInput({ register }) {
         value={formData.password}
         onChange={onPasswordChange}
       />
-      <label htmlFor="confirmPassword">Konfirmasi Password</label>
+      <label htmlFor="confirmPassword">Confirm Password</label>
       <input
         id="confirmPassword"
         type="password"
