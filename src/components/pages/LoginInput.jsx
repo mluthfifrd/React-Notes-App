@@ -1,11 +1,16 @@
 import React, { useState } from 'react'
 import PropTypes from 'prop-types'
+import { tailChase } from 'ldrs'
 
-const LoginInput = ({ login }) => {
+function LoginInput({ login }) {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   })
+
+  const [isLoading, setIsLoading] = useState(true)
+
+  tailChase.register()
 
   const onEmailChangeHandler = (event) => {
     setFormData((prevFormData) => ({
@@ -23,7 +28,13 @@ const LoginInput = ({ login }) => {
 
   const onSubmitHandler = (event) => {
     event.preventDefault()
-    login(formData)
+    try {
+      login(formData)
+      setIsLoading(false)
+    } catch (error) {
+      alert('Terjadi kegagalan saat melakukan Login :(')
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -44,7 +55,13 @@ const LoginInput = ({ login }) => {
         value={formData.password}
         onChange={onPasswordChangeHandler}
       />
-      <button>Masuk</button>
+      {isLoading ? (
+        <button>Masuk</button>
+      ) : (
+        <button disabled>
+          <l-tail-chase size="40" speed="1.75" color="gray"></l-tail-chase>
+        </button>
+      )}
     </form>
   )
 }
