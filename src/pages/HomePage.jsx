@@ -1,72 +1,77 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { getActiveNotes } from '../utils/local-data'
+import { getActiveNotes } from '../utils/network-data'
 import NotesEmptyPage from './NotesEmptyPage'
 import NotesList from '../components/notes/NotesList'
 import AddButton from '../components/button/AddButton'
 import SearchBar from '../components/SearchBar'
 
-function HomePageWrapper() {
+const HomePage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const keyword = searchParams.get('keyword')
-  function changeSearchParams(keyword) {
-    setSearchParams({ keyword })
-  }
+  const defaultKeyword = searchParams.get('keyword')
 
-  return <HomePage defaultKeyword={keyword} keywordChange={changeSearchParams} />
-}
+  const [notes, setNotes] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [keyword, setKeyword] = useState(defaultKeyword || '')
 
-class HomePage extends React.Component {
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      notes: getActiveNotes(),
-      keyword: props.defaultKeyword || ''
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true)
+        const { error, data } = await getActiveNotes()
+        if (error) {
+          // Handle error accordingly
+        } else {
+          setNotes(data)
+          setIsLoading(false)
+        }
+      } catch (error) {
+        // Handle error accordingly
+        setIsLoading(false)
+      }
     }
 
-    this.onKeywordChangeHandler = this.onKeywordChangeHandler.bind(this)
+    fetchData()
+  }, []) // useEffect akan dijalankan hanya sekali setelah render pertama
+
+  const onKeywordChangeHandler = (newKeyword) => {
+    setKeyword(newKeyword)
+    setSearchParams({ keyword: newKeyword })
   }
 
-  onKeywordChangeHandler(keyword) {
-    this.setState(() => {
-      return {
-        keyword
-      }
-    })
+  const filteredNotes = notes.filter((note) => {
+    return note.title.toLowerCase().includes(keyword.toLowerCase())
+  })
 
-    this.props.keywordChange(keyword)
+  if (isLoading) {
+    return (
+      <section className="homepage">
+        <h2>LOADING ...</h2>
+      </section>
+    )
   }
 
-  render() {
-    const notes = this.state.notes.filter((note) => {
-      return note.title.toLowerCase().includes(this.state.keyword.toLowerCase())
-    })
-
-    if (this.state.notes.length <= 0) {
-      return (
-        <section className="homepage">
-          <h2>Catatan Aktif</h2>
-          <SearchBar keyword={this.state.keyword} keywordChange={this.onKeywordChangeHandler} />
+  return (
+    <section className="homepage">
+      <h2>Catatan Aktif</h2>
+      <SearchBar keyword={keyword} keywordChange={onKeywordChangeHandler} />
+      {notes.length <= 0 ? (
+        <>
           <NotesEmptyPage />
           <div className="homepage__action">
             <AddButton />
           </div>
-        </section>
-      )
-    } else {
-      return (
-        <section className="homepage">
-          <h2>Catatan Aktif</h2>
-          <SearchBar keyword={this.state.keyword} keywordChange={this.onKeywordChangeHandler} />
-          <NotesList notes={notes} />
+        </>
+      ) : (
+        <>
+          <NotesList notes={filteredNotes} />
           <div className="homepage__action">
             <AddButton />
           </div>
-        </section>
-      )
-    }
-  }
+        </>
+      )}
+    </section>
+  )
 }
 
-export default HomePageWrapper
+export default HomePage
