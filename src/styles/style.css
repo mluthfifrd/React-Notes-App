@@ -33,6 +33,14 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
+.load-login {
+  color: var(--on-background);
+  background-color: var(--background);
+  min-height: 100vh;
+  transition: all ease-in-out 0.5s;
+  text-align: center;
+}
+
 .app-container {
   color: var(--on-background);
   background-color: var(--background);
