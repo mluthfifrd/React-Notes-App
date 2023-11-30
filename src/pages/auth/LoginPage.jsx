@@ -6,10 +6,11 @@ import { login } from '../../utils/network-data'
 
 function LoginPage({ loginSuccess }) {
   async function onLogin({ email, password }) {
-    const { error, data } = await login({ email, password })
-
-    if (!error) {
+    try {
+      const { data } = await login({ email, password })
       loginSuccess(data)
+    } catch (error) {
+      console.log('Error ketika login')
     }
   }
 
