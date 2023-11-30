@@ -29,14 +29,21 @@ function Header({ logout, name, authUser }) {
 
   if (authUser === null) {
     return (
-      <header>
-        <ThemeProvider value={themeContextValue}>
-          <h1>
-            <Link to="/">Aplikasi Catatan</Link>
-          </h1>
-          <ThemeButton />
-        </ThemeProvider>
-      </header>
+      <LocaleConsumer>
+        {({ locale }) => {
+          return (
+            <header>
+              <ThemeProvider value={themeContextValue}>
+                <h1>
+                  <Link to="/">{locale === 'id' ? 'Aplikasi Catatan' : 'Notes App'}</Link>
+                </h1>
+                <LocaleButton />
+                <ThemeButton />
+              </ThemeProvider>
+            </header>
+          )
+        }}
+      </LocaleConsumer>
     )
   }
 
@@ -47,7 +54,7 @@ function Header({ logout, name, authUser }) {
           <header>
             <ThemeProvider value={themeContextValue}>
               <h1>
-                <Link to="/">{locale === 'id' ? 'Catatan Aktif' : 'Active Notes'}</Link>
+                <Link to="/">{locale === 'id' ? 'Aplikasi Catatan' : 'Notes App'}</Link>
               </h1>
               <Navigation />
               <ThemeButton />
